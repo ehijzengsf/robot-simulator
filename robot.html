@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <title>Robot Simulator met Doel</title>
+  <style>
+    canvas {
+      border: 1px solid #000;
+      background-color: #f0f0f0;
+    }
+    #controls {
+      margin-top: 10px;
+    }
+    textarea {
+      width: 100%;
+      height: 100px;
+    }
+    button {
+      margin-right: 5px;
+    }
+    #result {
+      margin-top: 10px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h2>Robot Simulator</h2>
+  <canvas id="grid" width="500" height="500"></canvas>
+  <div id="controls">
+    <textarea id="code">turnRight()
+move()
+move()
+move()
+move()
+move()
+move()
+move()
+move()
+turnRight()
+move()
+move()
+pickup()</textarea><br>
+    <button onclick="runCode()">Uitvoeren</button>
+    <button onclick="reset()">Reset</button>
+    <button onclick="move()">Stap vooruit</button>
+    <button onclick="turnLeft()">Linksom draaien</button>
+    <button onclick="turnRight()">Rechtsom draaien</button>
+    <button onclick="paint()">Verf vak</button>
+    <button onclick="pickup()">Pak diamant</button>
+    <div id="result"></div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('grid');
+    const ctx = canvas.getContext('2d');
+    const gridSize = 10;
+    const cellSize = canvas.width / gridSize;
+
+    let robot = {
+      x: 0,
+      y: 5,
+      dir: 0,
+    };
+
+    const painted = Array.from({ length: gridSize }, () => Array(gridSize).fill(false));
+    const obstacles = Array.from({ length: gridSize }, () => Array(gridSize).fill(false));
+
+    // Diamantpositie
+    const diamond = { x: 8, y: 9 };
+    let hasDiamond = false;
+
+    // Obstakels
+    obstacles[2][2] = true;
+    obstacles[3][2] = true;
+    obstacles[4][4] = true;
+
+    function drawGrid() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      for (let y = 0; y < gridSize; y++) {
+        for (let x = 0; x < gridSize; x++) {
+          if (obstacles[y][x]) {
+            ctx.fillStyle = '#444';
+            ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+          } else if (painted[y][x]) {
+            ctx.fillStyle = '#a2d2ff';
+            ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+          }
+          ctx.strokeStyle = '#000';
+          ctx.strokeRect(x * cellSize, y * cellSize, cellSize, cellSize);
+        }
+      }
+
+      if (!hasDiamond) {
+        ctx.fillStyle = 'deepskyblue';
+        ctx.beginPath();
+        ctx.moveTo(diamond.x * cellSize + cellSize / 2, diamond.y * cellSize + 5);
+        ctx.lineTo(diamond.x * cellSize + 5, diamond.y * cellSize + cellSize / 2);
+        ctx.lineTo(diamond.x * cellSize + cellSize / 2, diamond.y * cellSize + cellSize - 5);
+        ctx.lineTo(diamond.x * cellSize + cellSize - 5, diamond.y * cellSize + cellSize / 2);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      ctx.fillStyle = 'red';
+      ctx.beginPath();
+      const centerX = robot.x * cellSize + cellSize / 2;
+      const centerY = robot.y * cellSize + cellSize / 2;
+      ctx.arc(centerX, centerY, cellSize / 4, 0, 2 * Math.PI);
+      ctx.fill();
+    }
+
+    function canMove(x, y) {
+      return x >= 0 && x < gridSize && y >= 0 && y < gridSize && !obstacles[y][x];
+    }
+
+    function move() {
+      let newX = robot.x;
+      let newY = robot.y;
+      switch (robot.dir) {
+        case 0: newX++; break;
+        case 1: newY++; break;
+        case 2: newX--; break;
+        case 3: newY--; break;
+      }
+      if (canMove(newX, newY)) {
+        robot.x = newX;
+        robot.y = newY;
+      }
+      drawGrid();
+    }
+
+    function turnLeft() {
+      robot.dir = (robot.dir + 3) % 4;
+      drawGrid();
+    }
+
+    function turnRight() {
+      robot.dir = (robot.dir + 1) % 4;
+      drawGrid();
+    }
+
+    function paint() {
+      painted[robot.y][robot.x] = true;
+      drawGrid();
+    }
+
+    function pickup() {
+      const resultBox = document.getElementById("result");
+      if (robot.x === diamond.x && robot.y === diamond.y) {
+        hasDiamond = true;
+        resultBox.textContent = "✅ Goed gedaan! Je hebt de diamant opgepakt.";
+      } else {
+        resultBox.textContent = "❌ Geen diamant op deze plek.";
+      }
+      drawGrid();
+    }
+
+    function runCode() {
+      const code = document.getElementById('code').value;
+      const commands = code.replace(/\n/g, ';');
+      const codeLines = commands.split(';').map(c => c.trim()).filter(c => c);
+      reset(false);
+      let i = 0;
+      function step() {
+        if (i >= codeLines.length) return;
+        const cmd = codeLines[i];
+        if (typeof window[cmd] === 'function') {
+          window[cmd]();
+        }
+        i++;
+        setTimeout(step, 500);
+      }
+      step();
+    }
+
+    function reset(clearPaint = true) {
+      robot = { x: 0, y: 5, dir: 0 };
+      hasDiamond = false;
+      document.getElementById("result").textContent = "";
+      if (clearPaint) {
+        for (let y = 0; y < gridSize; y++) {
+          for (let x = 0; x < gridSize; x++) {
+            painted[y][x] = false;
+          }
+        }
+      }
+      drawGrid();
+    }
+
+    drawGrid();
+  </script>
+</body>
+</html>
