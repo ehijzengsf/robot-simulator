@@ -54,15 +54,6 @@
       font-weight: bold;
       color: #ffd700;
     }
-    #instructionLog {
-      margin-top: 10px;
-      font-family: 'Fira Code', monospace;
-      white-space: pre-wrap;
-      background: #222;
-      padding: 8px;
-      border: 1px solid #00ff9f;
-      color: #00ff9f;
-    }
   </style>
 </head>
 <body>
@@ -77,7 +68,6 @@
     <button onclick="appendInstruction('turnRight()')">Rechtsom draaien</button>
     <button onclick="appendInstruction('paint()')">Verf vak</button>
     <button onclick="appendInstruction('pickup()')">Pak diamant</button>
-    <div id="instructionLog"></div>
     <div id="result"></div>
   </div>
 
@@ -208,7 +198,6 @@
     function appendInstruction(instruction) {
       const textarea = document.getElementById('code');
       textarea.value += (textarea.value.trim() ? '\n' : '') + instruction;
-      document.getElementById("instructionLog").textContent = textarea.value;
     }
 
     function reset(clearPaint = true) {
